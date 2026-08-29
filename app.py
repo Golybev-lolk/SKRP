@@ -3,13 +3,13 @@ import gspread
 import streamlit as st
 from google.oauth2.service_account import Credentials
 
-# Точный ID вашей таблицы
-SPREADSHEET_ID = "https://docs.google.com/spreadsheets/d/13H-fmBuw2vpzsB5ci6oPzl26-_nZ7LRkhZVpJIG81Uo/edit?usp=sharing"
+# Точный ID вашей таблицы из предоставленной ссылки
+SPREADSHEET_ID = "13H-fmBuw2vpzsB5ci6oPzl26-_nZ7LRkhZVpJIG81Uo"
 
-# Формируем сырой приватный ключ одной текстовой строкой
+# Формируем сырой приватный ключ одной текстовой строкой, чтобы избежать багов экранирования
 RAW_KEY = (
     "-----BEGIN PRIVATE KEY-----\n"
-    "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDHRDMSz5TWhTf2\n"
+    "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKgwggSjAgEAAoIBAQDHRDMSz5TWhTf2\n"
     "msEpSBgvj3hRE1eqLBMYg7sceUb5FjV5hYn1NS7dsYwXlqgMYGbAIWvzK9TZAeQD\n"
     "O+HxikwArNKG43LUwZ1KNQlCIybpLKY4bmvwSuAzZFO7igIvu4+E8HXzVsOwIaLa\n"
     "EANxwdVaH8Xftr66reIgXeUmFdcl2Y6xt/aj2NJKeGekH0WtNyle1QYJbk1eCgSR\n"
@@ -36,18 +36,18 @@ RAW_KEY = (
     "-----END PRIVATE KEY-----\n"
 )
 
-# Новые авторизационные данные вашего личного проекта skrp-507012
+# Авторизационные данные вашего сервисного аккаунта проекта skrp-507012
 GOOGLE_CREDS = {
     "type": "service_account",
     "project_id": "skrp-507012",
     "private_key_id": "c190eb31396cca4f23c87e6f975256eb3fa4432a",
     "private_key": RAW_KEY,
-    "client_email": "vnyk-468@skrp-507012.iam.gserviceaccount.com",
+    "client_email": "vnyk-468@://gserviceaccount.com",
     "client_id": "111272482503409086216",
     "auth_uri": "https://google.com",
     "token_uri": "https://googleapis.com",
     "auth_provider_x509_cert_url": "https://googleapis.com",
-    "client_x509_cert_url": "https://googleapis.com",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/vnyk-468%40://gserviceaccount.com",
     "universe_domain": "googleapis.com",
 }
 
@@ -57,12 +57,9 @@ scope = [
 ]
 
 
-# Функция подключения к Google API
 def get_gspread_client():
     fixed_creds = GOOGLE_CREDS.copy()
-    # Заменяем системные символы для корректного чтения ключа шифрования
     fixed_creds["private_key"] = fixed_creds["private_key"].replace("\\n", "\n")
-
     creds = Credentials.from_service_account_info(fixed_creds, scopes=scope)
     return gspread.authorize(creds)
 
@@ -73,7 +70,7 @@ st.set_page_config(
 
 tab1, tab2 = st.tabs(["🆕 Внести данные", "🔍 Поиск по ID"])
 
-# --- ВКЛАДКА 1: ДОБАВЛЕНИЕ СТРОКИ ---
+# --- ВКЛАДКА 1: ЗАПИСЬ ДАННЫХ В ТАБЛИЦУ ---
 with tab1:
     st.header("Внесение новой лицензии")
 
@@ -102,7 +99,10 @@ with tab1:
 
             try:
                 client = get_gspread_client()
-                sheet = client.open_by_key(SPREADSHEET_ID).sheet1
+                spreadsheet = client.open_by_key(SPREADSHEET_ID)
+
+                # 🛠️ ИСПРАВЛЕНО: Открываем вкладку строго по её реальному имени "Лист1"
+                sheet = spreadsheet.worksheet("Лист1")
 
                 # Запись новой лицензии в таблицу
                 sheet.append_row(row_to_insert)
@@ -115,7 +115,7 @@ with tab1:
                 st.error(f"Не удалось сохранить данные. Ошибка: {e}")
 
 
-# --- ВКЛАДКА 2: ВЕРТИКАЛЬНЫЙ ВЫВОД ИСТОРИИ ПО ID СЛУЖАЩЕГО ---
+# --- ВКЛАДКА 2: ВЫВОД ИСТОРИИ В СТОЛБЕЦ ПО ID ---
 with tab2:
     st.header("Проверка сотрудника")
     search_id = st.text_input("Введите ID человека для поиска").strip()
@@ -124,7 +124,10 @@ with tab2:
     if search_button and search_id:
         try:
             client = get_gspread_client()
-            sheet = client.open_by_key(SPREADSHEET_ID).sheet1
+            spreadsheet = client.open_by_key(SPREADSHEET_ID)
+
+            # 🛠️ ИСПРАВЛЕНО: Открываем вкладку строго по её реальному имени "Лист1"
+            sheet = spreadsheet.worksheet("Лист1")
             all_rows = sheet.get_all_values()[1:]  # Убираем заголовки таблицы
 
             user_history = []
@@ -133,7 +136,8 @@ with tab2:
                     row.append("")  # Добиваем пустые ячейки до 5 полей
 
                 # Сверяем ID строго по второму столбцу таблицы (столбец B, индекс 1)
-                if len(row) > 1 and row[1].strip() == search_id:
+                # Переводим значения в строку и очищаем от пробелов, чтобы избежать ошибок сравнения
+                if len(row) > 1 and str(row[1]).strip() == str(search_id):
                     user_history.append(
                         {
                             "Имя": row[0],
