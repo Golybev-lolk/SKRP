@@ -13,7 +13,7 @@ with tab1:
     with st.form("license_form", clear_on_submit=True):
         user_name = st.text_input("Имя существа").strip()
         user_id = st.text_input("ID существа").strip()
-        mine_name = st.text_input("На какую шахту выдана лицензия").strip()
+        mine_name = st.text_input("На что выдана лицензия?").strip()
         license_type = st.selectbox("Тип лицензии", ["Добыча", "Продажа"])
         license_expiry = st.date_input(
             "Дата окончания лицензии", min_value=datetime.date.today()
