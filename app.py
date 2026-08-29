@@ -1,25 +1,9 @@
 import datetime
-import gspread
 import streamlit as st
-from google.oauth2.service_account import Credentials
+import requests
 
-# Точный ID вашей Google Таблицы
-SPREADSHEET_ID = "13H-fmBuw2vpzsB5ci6oPzl26-_nZ7LRkhZVpJIG81Uo"
-
-scope = [
-    "https://googleapis.com",
-    "https://googleapis.com",
-]
-
-def get_gspread_client():
-    # Программа безопасно забирает оригинальный JSON из панели Secrets
-    if "gcp_service_account" in st.secrets:
-        creds_dict = dict(st.secrets["gcp_service_account"])
-        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
-    else:
-        st.error("Системные ключи Google API не найдены в настройках Secrets!")
-        st.stop()
-    return gspread.authorize(creds)
+# ⚠️ ВСТАВЬТЕ ВАШУ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT МЕЖДУ КАВЫЧКАМИ:
+API_URL = "https://script.google.com/macros/s/AKfycbx6Lpv30PzZUwggoyV2QIHaoALEoVudC9vZzUsTGyClkqOa87d4_OVe8QcZoTSZ23x1/exec"
 
 st.set_page_config(
     page_title="Система управления лицензиями", page_icon="🔑", layout="centered"
@@ -45,32 +29,27 @@ with tab1:
         if not user_name or not user_id or not mine_name:
             st.error("Ошибка! Все текстовые поля должны быть заполнены.")
         else:
-            formatted_date = license_expiry.strftime("%d.%m.%Y")
-            row_to_insert = [
-                user_name,
-                user_id,
-                mine_name,
-                license_type,
-                formatted_date,
-            ]
-
+            # Формируем данные для отправки в макрос таблицы
+            payload = {
+                "name": user_name,
+                "id": user_id,
+                "mine": mine_name,
+                "type": license_type,
+                "expiry": license_expiry.isoformat()
+            }
             try:
-                client = get_gspread_client()
-                spreadsheet = client.open_by_key(SPREADSHEET_ID)
-                sheet = spreadsheet.worksheet("Лист1")
-
-                # Запись новой строки
-                sheet.append_row(row_to_insert)
-
-                st.success("Данные успешно внесены в Google Таблицу!")
-                st.info(
-                    f"Лицензия ({license_type}) для {mine_name} активна до {formatted_date}"
-                )
+                # Отправляем POST запрос напрямую в таблицу
+                response = requests.post(API_URL, json=payload).json()
+                if response.get("status") == "success":
+                    st.success("Данные успешно внесены в Google Таблицу!")
+                    st.info(f"Лицензия ({license_type}) для {mine_name} активна до {license_expiry.strftime('%d.%m.%Y')}")
+                else:
+                    st.error(f"Ошибка скрипта таблицы: {response.get('message')}")
             except Exception as e:
-                st.error(f"Не удалось сохранить данные. Ошибка: {e}")
+                st.error(f"Не удалось связаться с таблицей. Ошибка: {e}")
 
 
-# --- ВКЛАДКА 2: ПОИСК ПО ID ---
+# --- ВКЛАДКА 2: ВЫВОД ИСТОРИИ В СТОЛБЕЦ ПО ID ---
 with tab2:
     st.header("Проверка сотрудника")
     search_id = st.text_input("Введите ID человека для поиска").strip()
@@ -78,40 +57,23 @@ with tab2:
 
     if search_button and search_id:
         try:
-            client = get_gspread_client()
-            spreadsheet = client.open_by_key(SPREADSHEET_ID)
-            sheet = spreadsheet.worksheet("Лист1")
-            all_rows = sheet.get_all_values()[1:]
+            # Отправляем GET запрос в макрос для поиска ID
+            response = requests.get(f"{API_URL}?id={search_id}").json()
 
-            user_history = []
-            for row in all_rows:
-                while len(row) < 5:
-                    row.append("")
-
-                if len(row) > 1 and str(row[1]).strip() == str(search_id):
-                    user_history.append(
-                        {
-                            "Имя": row[0],
-                            "ID": row[1],
-                            "Шахта": row[2],
-                            "Тип": row[3],
-                            "Дата": row[4],
-                        }
-                    )
-
-            if not user_history:
+            if not response:
                 st.warning(f"Записей для ID '{search_id}' не найдено.")
             else:
-                st.markdown(f"### Найдено записей: {len(user_history)}")
+                st.markdown(f"### Найдено записей: {len(response)}")
                 st.write("Все лицензии человека отображены ниже в столбец:")
 
-                for idx, record in enumerate(user_history, 1):
+                # Выводим карточки последовательно в столбец одна за другой
+                for idx, record in enumerate(response, 1):
                     st.markdown(f"---")
-                    st.markdown(f"### 📋 Запись №{idx} ({record['Тип']})")
-                    st.write(f"**ФИО:** {record['Имя']}")
-                    st.write(f"**ID пользователя:** {record['ID']}")
-                    st.write(f"**Название шахты:** {record['Шахта']}")
-                    st.write(f"**Действует до:** {record['Дата']}")
+                    st.markdown(f"### 📋 Запись №{idx} ({record['type']})")
+                    st.write(f"**ФИО:** {record['name']}")
+                    st.write(f"**ID пользователя:** {record['id']}")
+                    st.write(f"**Название шахты:** {record['mine']}")
+                    st.write(f"**Действует до:** {record['expiry']}")
 
         except Exception as e:
-            st.error(f"Ошибка при чтении таблицы: {e}")
+            st.error(f"Ошибка при чтении данных из таблицы: {e}")
