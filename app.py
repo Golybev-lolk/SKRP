@@ -2,7 +2,7 @@ import datetime
 import streamlit as st
 import requests
 
-# ⚠️ ВСТАВЬТЕ ВАШУ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT МЕЖДУ КАВЫЧКАМИ:
+# Ссылка на ваш Google Apps Script (остается вашей старой)
 API_URL = "https://script.google.com/macros/s/AKfycbx6Lpv30PzZUwggoyV2QIHaoALEoVudC9vZzUsTGyClkqOa87d4_OVe8QcZoTSZ23x1/exec"
 
 st.set_page_config(
@@ -29,7 +29,6 @@ with tab1:
         if not user_name or not user_id or not mine_name:
             st.error("Ошибка! Все текстовые поля должны быть заполнены.")
         else:
-            # Формируем данные для отправки в макрос таблицы
             payload = {
                 "name": user_name,
                 "id": user_id,
@@ -38,18 +37,17 @@ with tab1:
                 "expiry": license_expiry.isoformat()
             }
             try:
-                # Отправляем POST запрос напрямую в таблицу
                 response = requests.post(API_URL, json=payload).json()
                 if response.get("status") == "success":
                     st.success("Данные успешно внесены в Google Таблицу!")
-                    st.info(f"Лицензия ({license_type}) для {mine_name} активна до {license_expiry.strftime('%d.%m.%Y')}")
+                    st.info(f"Лицензия активна. Срок: {datetime.date.today().strftime('%d.%m.%Y')} - {license_expiry.strftime('%d.%m.%Y')}")
                 else:
                     st.error(f"Ошибка скрипта таблицы: {response.get('message')}")
             except Exception as e:
                 st.error(f"Не удалось связаться с таблицей. Ошибка: {e}")
 
 
-# --- ВКЛАДКА 2: ВЫВОД ИСТОРИИ В СТОЛБЕЦ ПО ID ---
+# --- ВКЛАДКА 2: ВЫВОД ИСТОРИИ В СТОЛБЕЦ С КРАСИВЫМИ ДАТАМИ ---
 with tab2:
     st.header("Проверка сотрудника")
     search_id = st.text_input("Введите ID человека для поиска").strip()
@@ -57,23 +55,23 @@ with tab2:
 
     if search_button and search_id:
         try:
-            # Отправляем GET запрос в макрос для поиска ID
             response = requests.get(f"{API_URL}?id={search_id}").json()
 
             if not response:
                 st.warning(f"Записей для ID '{search_id}' не найдено.")
             else:
                 st.markdown(f"### Найдено записей: {len(response)}")
-                st.write("Все лицензии человека отображены ниже в столбец:")
+                st.write("Все лицензии человека отображены ниже от старых к новым:")
 
-                # Выводим карточки последовательно в столбец одна за другой
                 for idx, record in enumerate(response, 1):
                     st.markdown(f"---")
                     st.markdown(f"### 📋 Запись №{idx} ({record['type']})")
                     st.write(f"**ФИО:** {record['name']}")
                     st.write(f"**ID пользователя:** {record['id']}")
                     st.write(f"**Название шахты:** {record['mine']}")
-                    st.write(f"**Действует до:** {record['expiry']}")
+                    
+                    # 🛠️ ИСПРАВЛЕНО: Выводим даты диапазоном "сегодня" - "окончание срока" в красивом формате
+                    st.write(f"**Срок действия лицензии:** {record.get('today', '—')} - {record.get('expiry', '—')}")
 
         except Exception as e:
             st.error(f"Ошибка при чтении данных из таблицы: {e}")
