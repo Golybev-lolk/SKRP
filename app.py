@@ -1,56 +1,52 @@
 import datetime
 import gspread
 import streamlit as st
-import base64
 from google.oauth2.service_account import Credentials
 
 # Точный ID вашей Google Таблицы
 SPREADSHEET_ID = "13H-fmBuw2vpzsB5ci6oPzl26-_nZ7LRkhZVpJIG81Uo"
 
-# Идеально упакованный оригинальный ключ в формат Base64 без единого скрытого символа или переноса строки
-B64_KEY = (
-    "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tXG5NSUlFdlFJQkFEQU5CZ2txaGtpRzl3MEJBUUVG"
-    "QUFTQ0JLb3dnZVNqQWdFQUFvSUJBUURIRkRNU3o1VFdoVGYyXG5tc0VwU0JndmozaFJFMWVxTEJN"
-    "WWc3c2NlVWI1RmpWNWhZbjFOUzdkc1l3WGxxZ01ZR2JBSVd2ektPVFpBZVpEXG5PK0h4aWt3QXJO"
-    "S0c0M0xVd1oxS05RbENJeWJwTEtZNGJtdndTdUF6WkZPN2lnSXZ1NCtFOEhYelZzT3dJYUxhXG5F"
-    "QU54d2RWYUg4WGZ0cjY2cmVJZ1hlVW1GZGNsMlk2eHQvYWoyTktlR2VrSDBXdE55bGUxUVlKYmsx"
-    "ZUNnU1JcbjhGam5DZnlrLzErSElwanBhM3NmNzQrdXZPcFk1cDltMTNxYVFmZlU3bG5lL05JbkZp"
-    "N3JMKzJUNzU1TFVwc1x5MHBQSnBDOFFha1BrQkZrK053dHhwemRkbXp2SWo1YUdBdVp3ZWVPMXdE"
-    "STVUYm5lVk9iek4zTWV0Rk1yRnFOXG52Sng5eGpwOUFnTUJBQUVDZ2dFQUYwLzZCcThjNjEwQ0Qx"
-    "cUxFeXlSVWMwZjV5SlRiUUFEaXVoc2RWZ1Y3dUhEXG5sMUJCYzl2UlBCUUh2d0c3N3RpL1pLWjBW"
-    "ZXB3bUNQUnZIUXV5cTZpbGlpaDU3Q0g4RzZuVzNWcGZDQ1hMb3Z2XG45V1dyd0p6TjdvMUVBNXFS"
-    "bDJxQ3o2dC9MU1VmTjBXMEl2MWhIY2V1MFlDcU1uSHJrZlVHWWNHQ2E4cDkxWHBSXG54TDRhdkU5"
-    "WHMrbnBrYU9WWU5wcnJHTHcyT0EzcjNuNjNVM2dBeVFxeUM2TWdWRzh5b0J2MjQ3MFordXBjbnpV"
-    "XG4yM0NzYmFUcUtZKzEySlhwTFM0d0I3OXA4MGlaMTFTMm5nWHIzbFlZYnc3WVJvUGkzTkdCb3Vi"
-    "UzVxVHliaG41XG5LaUVYTlN3ZnBidDd3aW5iRHhvam13UzJrZGZ4YmtLbmNaYXVtMEp6cVFLQmdR"
-    "RHJHVlVaVHZHaGtTTHlRUm9sXG5VYlZwVDN6VGh4NzdKYWhCdm5tVkJGaDZXSm5RSGZiSnNoajJZ"
-    "TDZUaGcwWkJyQm5LRHZqSjZlK2l6bEF1ZlNCTX crappy"
-    "VllThVZDZsazQ1NHNwWEtZRzIwY3hoeU9tUFFOQnBDVG45SFdqbkZuN2hrR1ZHcmNNeUV0bXFYdn"
-    "RYZHFcbkVlWGw3dURjUmNlWjhDZG5HRDdOOSt3NjRLQmdRRFkrMWlzWXZjcW12STZTNW5mYjNFam"
-    "NJOVZFdTVkMHgvN1xiVnlIR2NtR3dzaEFTeDNtWFB4UDEsa0NOaUpvaTFyWmxZSW0vNjhKQlNRcz"
-    "hhUFl4MjYyNU5KaVVsZ0E5UjBnTVxuMFZId1FUc1p5a1poMG1YcUp0cFRBaDN6R0NoajhwTmdlQi"
-    "9xRmR1U1hqSldYZG5hL2hZbnVxYVdlTGZTWWRtMVxucl狠OEdMdGdkUUtCZ0FtRGNPa1hRNjNp"
-    "RGFQMzlzTGtKNDhuWkVtN0FnbnZzQ3RZNWRxdDNtYTFCeVJnMGdlL1xuYVRzekZGM0Y0dW5NVFNN"
-    "ZmdhemNnZW80QUEwYWVVWnZUeWFtem04Q21KdzRpY0lMditKZjJiK0dVTWw5YndMSFxuN1RuTUVk"
-    "VzQwTGYvN290UEJ6UDU3YkhHdkVnPXZrSlFqeGtLM1phTVRGT0w3ME54ZklzdDY2TmhBb0dBSFdJ"
-    "MFxuU093Q0FzQUc2NFFQYTJuMmJWRXg3TGgybFRnaERhQnF0bFQwcUk0NkpoSzdQV1g4T1NlUGlG"
-    "c21YRzl0TmQ5VFxuNkN5YUd0TTBkVkxWZkQwSmFBcEtXMXpRM1h1SXMwdXBaL3E5Y1NtbVRGcjhp"
-    "Qy9Zd3dMM1lWTTFMVnZOajNQVlxuQnBNOUw5NFh2UUJxbnpCbmVhdmFJV2hwcEZEaDlhczhzSkox"
-    "WDBDZ1lFQXpCMElpRW9mQWNNcmFTNkFCcnJJXG5jTGFZcms5WHJEOFdhYkpKVGRhdWtIb2dPU0Nx"
-    "NjdJcHlSZmRVVlBxNmVYL0FyTWUwR3JFYml2NjdnakwvZWprXG43M1doQ3BXS0MrWjVvSGlBcVh0"
-    "Z24wSW1PcnV4QUpWRk43NzYwVXNSc0d2UUdDZkZOTEorcm1NYnY5emtYMGkxXG5GaU54cm1WQmRn"
-    "eDJsVlpxR2hyUUprPSIsCiAgICAtLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tXG4="
-)
+# Безопасная запись приватного ключа списком строк
+KEY_LINES = [
+    "-----BEGIN PRIVATE KEY-----\n",
+    "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKgwggSjAgEAAoIBAQDHRDMSz5TWhTf2\n",
+    "msEpSBgvj3hRE1eqLBMYg7sceUb5FjV5hYn1NS7dsYwXlqgMYGbAIWvzK9TZAeQD\n",
+    "O+HxikwArNKG43LUwZ1KNQlCIybpLKY4bmvwSuAzZFO7igIvu4+E8HXzVsOwIaLa\n"
+    "EANxwdVaH8Xftr66reIgXeUmFdcl2Y6xt/aj2NJKeGekH0WtNyle1QYJbk1eCgSR\n",
+    "8FjnCfyk/1+HIpjpa3sf74+uvOpY5p9m13qaQffU7lne/NInFfi7rL+2T5z5LUps\n",
+    "y0pPJpC8QakPkBFk+NwtxpzddmzvIj5aGAuZweeO1wDI5TbneVObzN3MetFMrFqN\n",
+    "vJx9xjp9AgMBAAECggEAF0/6Bq8c610CD1qLEyyRUc0f5yJTbQADiuhsdVgV7tHD\n",
+    "l1BBc9vRPBQHvwG77ti/ZKZ0VepwmCPRvHQeyq6iliih57CH8G6nW3VpfCCXLovv\n",
+    "9WWrwJzN7o1EA4qRl2qCz6t/LSUfN0W0Iv1hHceu0YCqmnHrjfUGYcGCa8p91XpR\n",
+    "xL4avE9Xs+npkaOVXNprrGLw2OA3r3n63U3gAyQqyC6MgVG8yoBv2470Z+upcnzU\n",
+    "23CsbaTqKY+12JXpLS4wB79p80iZ11S2ngXr3lYZbw7YRoPi3NGBoubS5qTyXbn5\n",
+    "KiEXNSwfpbt7winbDxojmwS2kdfxbkKncZwum0JzqQKBgQDrGVUZTvGhkSLyQRol\n",
+    "UbVpT3zThx77JahBvnmVBFh6WJnQHfbJshj2yL4Thg0ZBbBnKDvjJ6e+izlAufSB\n",
+    "BY8OFuLUd6lk454spXKYG202cxhOmPQNBpCTn9HWjfFn7hkGVGrcMyEtmqXvTXdq\n",
+    "EeXl7uDcRcecZ8CdnGD7N9+w6QKBgQDY+1isYvcqmvI6S5nfj3EjcI95Eu5d0x/7\n"
+    "bVyHGcmGwshASs3mXPxP1kCNiJoi1rZlYIm/68JBSQs8aPYx2/25NJiUlgA9R0gM\n"
+    "0VHwQTsZykZh0mXqJtpTAh3zGChj8pNgeB/qFduSXjJWXdna/hYnuqaWeLfSYdm1\n"
+    "rAN8GLtgdQKBgAmDcOohQ63iDaP39nLkJ48nZEm7AgnvsCtY5dqd3ma1ByRg0ge/\n"
+    "aTszTF3F4unMTSMfgazjgeo4AA0aeUZvTyamzm8CmJw4icIMv+Jf2b+GUMl9bwLH\n"
+    "7TnMEdW40Lf/7otPBzP57bHGvEg+vkJQjxkK3ZaMTFOL70NxfIst66NhAoGAHWI0\n"
+    "SOwCAsAG64QPa2n2bVEx7Lh2lTghDaBqtlT0qI46JhK7PWX8OSePiFsmXG9tNd9T\n"
+    "6CyaGtM0dVLVfD0JaApKW1zQ3XuIs0upZ/q9cSmmTFr8uC/YwwL3YVM1LQvNj3PV\n"
+    "BpM9L94XvQBqnzBneavaIWhppFDh9as8sZJ71X0CgYEAzB0IiEofAcMraS6ABrrI\n"
+    "cLaYrk9XrD8WabvJTdaukHogOSCq67IpyRfdVUFq6eX/ArMe0GrEbiv67gjL/ejk\n"
+    "73WhCpWKC+Z5oHiAqXtgn0ImOruxAJVFN7760UsRsGvQGCfNFNJ+rmMbv9zkX0i1\n"
+    "FiNxrmVQdgx2lkVZqGhrQJk=\n",
+    "-----END PRIVATE KEY-----\n"
+]
 
-# Декодируем Base64 строку обратно в PEM-формат для Google API
-DECODED_KEY = base64.b64decode(B64_KEY).decode("utf-8").replace("\\n", "\n")
+# Склеиваем список строк в монолитный PEM-ключ
+CLEAN_PRIVATE_KEY = "".join(KEY_LINES)
 
 # Авторизационные данные вашего сервисного аккаунта проекта skrp-507012
 GOOGLE_CREDS = {
     "type": "service_account",
     "project_id": "skrp-507012",
     "private_key_id": "c190eb31396cca4f23c87e6f975256eb3fa4432a",
-    "private_key": DECODED_KEY,
+    "private_key": CLEAN_PRIVATE_KEY,
     "client_email": "vnyk-468@://gserviceaccount.com",
     "client_id": "111272482503409086216",
     "auth_uri": "https://google.com",
@@ -65,11 +61,9 @@ scope = [
     "https://googleapis.com",
 ]
 
-
 def get_gspread_client():
     creds = Credentials.from_service_account_info(GOOGLE_CREDS, scopes=scope)
     return gspread.authorize(creds)
-
 
 st.set_page_config(
     page_title="Система управления лицензиями", page_icon="🔑", layout="centered"
@@ -153,6 +147,8 @@ with tab2:
                 st.warning(f"Записей для ID '{search_id}' не найдено.")
             else:
                 st.markdown(f"### Найдено записей: {len(user_history)}")
+                st.write("Все лицензии человека отображены ниже в столбец:")
+
                 for idx, record in enumerate(user_history, 1):
                     st.markdown(f"---")
                     st.markdown(f"### 📋 Запись №{idx} ({record['Тип']})")
