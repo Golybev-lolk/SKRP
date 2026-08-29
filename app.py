@@ -41,7 +41,8 @@ GOOGLE_CREDS = {
     "type": "service_account",
     "project_id": "gen-lang-client-0637058958",
     "private_key_id": "ec7efaf300e156f779dba1f54c13cd778dc91bb8",
-    "private_key": RAW_PRIVATE_KEY,  # Передаем очищенный ключ
+    "private_key": RAW_PRIVATE_KEY,
+    # 🛠️ ИСПРАВЛЕНО: Указан ваш точный email со скриншота таблицы
     "client_email": "skyrimik@://gserviceaccount.com",
     "client_id": "101670696874417843186",
     "auth_uri": "https://google.com",
@@ -87,7 +88,7 @@ with tab1:
         else:
             formatted_date = license_expiry.strftime("%d.%m.%Y")
 
-            # Собираем данные строго под вашу структуру колонок таблицы A, B, C, D, E
+            # Собираем данные под структуру колонок таблицы A, B, C, D, E
             row_to_insert = [
                 user_name,
                 user_id,
@@ -100,7 +101,7 @@ with tab1:
                 client = get_gspread_client()
                 sheet = client.open_by_key(SPREADSHEET_ID).sheet1
 
-                # Команда мгновенного добавления строки в самый конец таблицы
+                # Добавление строки в таблицу
                 sheet.append_row(row_to_insert)
 
                 st.success("Данные успешно внесены в Google Таблицу!")
@@ -127,15 +128,15 @@ with tab2:
                 while len(row) < 5:
                     row.append("")
 
-                # Проверка: совпадает ли ID во втором столбце (индекс 1)
-                if len(row) > 1 and row[1].strip() == search_id:
+                # Сверяем ID (столбец B, индекс 1)
+                if len(row) > 1 and row.strip() == search_id:
                     user_history.append(
                         {
-                            "Имя": row[0],
-                            "ID": row[1],
-                            "Шахта": row[2],
-                            "Тип": row[3],
-                            "Дата": row[4],
+                            "Имя": row,
+                            "ID": row,
+                            "Шахта": row,
+                            "Тип": row,
+                            "Дата": row,
                         }
                     )
 
