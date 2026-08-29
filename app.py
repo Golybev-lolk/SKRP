@@ -4,7 +4,7 @@ import streamlit as st
 from google.oauth2.service_account import Credentials
 
 # Точный ID вашей таблицы
-SPREADSHEET_ID = "13H-fmBuw2vpzsB5ci6oPzl26-_nZ7LRkhZVpJIG81Uo"
+SPREADSHEET_ID = "https://docs.google.com/spreadsheets/d/13H-fmBuw2vpzsB5ci6oPzl26-_nZ7LRkhZVpJIG81Uo/edit?usp=sharing"
 
 # Формируем сырой приватный ключ одной текстовой строкой
 RAW_KEY = (
