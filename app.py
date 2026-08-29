@@ -2,7 +2,9 @@ import datetime
 import gspread
 import streamlit as st
 from google.oauth2.service_account import Credentials
-TABLE_URL = "https://docs.google.com/spreadsheets/d/13H-fmBuw2vpzsB5ci6oPzl26-_nZ7LRkhZVpJIG81Uo/edit?usp=sharing"
+
+# Точный и проверенный ID вашей таблицы
+SPREADSHEET_ID = "13H-fmBuw2vpzsB5ci6oPzl26-_nZ7LRkhZVpJIG81Uo"
 
 GOOGLE_CREDS = {
     "type": "service_account",
@@ -51,8 +53,7 @@ with tab1:
 
             try:
                 client = get_gspread_client()
-                # 🛠️ ИСПОЛЬЗУЕМ ССЫЛКУ ВМЕСТО НАЗВАНИЯ:
-                sheet = client.open_by_url(TABLE_URL).sheet1
+                sheet = client.open_by_key(SPREADSHEET_ID).sheet1
                 sheet.append_row(row_to_insert)
                 st.success("Данные успешно внесены в таблицу!")
                 st.info(f"Лицензия ({license_type}) для {mine_name} активна до {formatted_date}")
@@ -68,16 +69,16 @@ with tab2:
     if search_button and search_id:
         try:
             client = get_gspread_client()
-            # 🛠️ ИСПОЛЬЗУЕМ ССЫЛКУ ВМЕСТО НАЗВАНИЯ ТАКЖЕ И ЗДЕСЬ:
-            sheet = client.open_by_url(TABLE_URL).sheet1
+            sheet = client.open_by_key(SPREADSHEET_ID).sheet1
             all_rows = sheet.get_all_values()[1:]
 
             user_history = []
             for row in all_rows:
+                # Добиваем строку пустыми элементами до 5 столбцов
                 while len(row) < 5:
                     row.append("")
 
-                # Проверка ID во втором столбце
+                # Сравниваем введенный ID строго со значением во 2-м столбце (индекс 1)
                 if len(row) > 1 and row[1].strip() == search_id:
                     user_history.append({
                         "Имя": row[0],
