@@ -15,7 +15,7 @@ tab1, tab2 = st.tabs([" Внести данные", " Поиск по ID"])
 
 with tab1:
     st.header("Внесение новой лицензии")
-    st.write("Чтобы внести данные, используйте таблицу напрямую, либо введите информацию ниже:")
+    st.write("Чтобы внести данные введите информацию ниже(ПИШИ БУКВЫ):")
     
     with st.form("license_form", clear_on_submit=True):
         user_name = st.text_input("Имя человека").strip()
