@@ -1,20 +1,7 @@
-import sys
-import subprocess
-try:
-    import gspread
-except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "gspread"])
-    import gspread
-
-try:
-    import google
-except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "google-auth"])
-
 import datetime
+import gspread
 import streamlit as st
 from google.oauth2.service_account import Credentials
-
 scope = [
     "https://googleapis.com",
     "https://googleapis.com",
