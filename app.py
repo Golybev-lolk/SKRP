@@ -3,46 +3,46 @@ import gspread
 import streamlit as st
 from google.oauth2.service_account import Credentials
 
-# Точный ID вашей таблицы
+# Точный и проверенный ID вашей таблицы из предоставленной ссылки
 SPREADSHEET_ID = "13H-fmBuw2vpzsB5ci6oPzl26-_nZ7LRkhZVpJIG81Uo"
 
-# Форматируем ключ как многострочный текст без скрытых символов \n
-RAW_PRIVATE_KEY = """-----BEGIN PRIVATE KEY-----
-MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC8h+V7e+N25MQp
-DL4n/TsdUiNyAL4rDyIuEBX0huXbRRLfSX2svuPoL9I8iyNlnk/c2VebhKrav/jL
-ZnvcDbBbZObRdCT3OZei5mLBNBYC/NWBRCvSMWltN9caMyH/ZdokUhJ41QxVMR1J
-vscJ02Yei+4MmuikXNXajt+LsTnoHXkQvT2DMbPbFj2s9GqoskE7ELgxHuzwFoOC
-5EH0grIphSi5D5RHA5oGU4oUrhRbqvbB9aydPMKRhODvGZFnC7ZCBPBMfFA5m/74
-iGkG7XkML4z97YkfdK9pCY+4zVfXk9jI+iHFVb2wQn936Mg6GYYRRu8EX+VD3IEw
-cJ74R2JdAgMBAAECggEARy7GUhPqQ+NHPzqM95tQvRbcxDgMlURvAtZW+88NLXeM
-kxrz5QvkEDAyIGLmeAFIpRm4zsLOIa7W+LFWtbTDcBaOYeoI5QFtQ/fZtJn+b51X
-3alIJGI8rJynTkCdJwmlTg5g5BeIwwe6x7PNAeQ8C++Ib2Dz0s8sfYtxUxSUyRLl
-E95DypgkwVs4x6v8nloYcExPne35MGFPOpO5W84hfY795Ivy4huitstVp7vzaT2n
-l/Kqzran3jqalQnV4NtKzCE4yuwpwp4ZN2q5NZAoGls7IMUa8gj7fpvRbrm7GWkU
-O8ifi/m2bazd0ZhZr0B0veotHsimORMQ7J8x64G4nwKBgQDxl88ZwnazAPjd443B
-Z92RBSN/2Ty+ySFDTnVPCRrwkDlUCLZw4ffnschQ5cFotUXlZsITZuQIyHJoQwz5
-RfHvV8Z9doAXR6heurIwVz1Mf+TDLmNRylIOUaPdCYBYXzyd/Y5GLqqrMRVmZJUR
-A/K6NvXE0gR7ugzCuTxwUYiFkwKBgQDHxgiPnnIFWjdB/fr+ycu3L02DjeXM0Nxf
-lFVqkqTpeCS8G2RX6guJv/U57W9V6wcYEyK6JNzYVmvIal7CzFy5ADUt+nWnUiMt
-OQLaA8JNnjZxj8QyUuLFGUmL/HEpywL7nVkbngV5aYEEdkbrl0adWvD0TmLUgCPy
-rGZ+O9tuTwKBgFsfhlbR+VF1CWkv3hTX50M+q/AZ8QaI+EnZuvdvmMCptWXTz3Ru
-VsIGVWbl8fhbfxySkJse0N3bNQPMXoVa83DyK4TBAHlHZuMsCe+fyBglmRRhV8bO
-x/psoqDJZ6ZtbYCt1U71ZRwi7E5tm6gKVDAWcMam7Ff6ibucgIZgylyPAoGBALZC
-5uyhEkXv2RpMLgLm+QVYEtBDVbVXmLdbDdL9l5eqFVnJY/MRhRVYHNOM3Fb25rIA
-Q16w4ww9THi9E1eGO9JNbjdUmqLdPVq0+PUPGObXwbQ6BjYjiOFqAL/GwTfwD/if
-xfx8X2I174+ymWG30qUdo1hBa8mUXze4MopY8gnhAoGBANxHUWvTOH28ot5pO+qy
-uuLMzB6KlJfrgFnXk3miWojy4iixC2nqPVmy3KAE2oxWpcCor6dkNG8t8IYu9SSz
-eX1mIeW6lomEFIGpAouY8l9/q3sa6V8028RQ9asNsRHiEUL7U6683U3ruyGi8hGt
-a/Hwa5FpRaB4ZycgWiYWW5kP
------END PRIVATE KEY-----"""
+# Формируем сырой приватный ключ одной сплошной строкой, чтобы избежать багов TOML и YAML
+RAW_KEY = (
+    "-----BEGIN PRIVATE KEY-----\n"
+    "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC8h+V7e+N25MQp\n"
+    "DL4n/TsdUiNyAL4rDyIuEBX0huXbRRLfSX2svuPoL9I8iyNlnk/c2VebhKrav/jL\n"
+    "ZnvcDbBbZObRdCT3OZei5mLBNBYC/NWBRCvSMWltN9caMyH/ZdokUhJ41QxVMR1J\n"
+    "vscJ02Yei+4MmuikXNXajt+LsTnoHXkQvT2DMbPbFj2s9GqoskE7ELgxHuzwFoOC\n"
+    "5EH0grIphSi5D5RHA5oGU4oUrhRbqvbB9aydPMKRhODvGZFnC7ZCBPBMfFA5m/74\n"
+    "iGkG7XkML4z97YkfdK9pCY+4zVfXk9jI+iHFVb2wQn936Mg6GYYRRu8EX+VD3IEw\ncJ74R2JdAgMBAAECggEARy7GUhPqQ+NHPzqM95tQvRbcxDgMlURvAtZW+88NLXeM\n"
+    "kxrz5QvkEDAyIGLmeAFIpRm4zsLOIa7W+LFWtbTDcBaOYeoI5QFtQ/fZtJn+b51X\n"
+    "3alIJGI8rJynTkCdJwmlTg5g5BeIwwe6x7PNAeQ8C++Ib2Dz0s8sfYtxUxSUyRLl\n"
+    "E95DypgkwVs4x6v8nloYcExPne35MGFPOpO5W84hfY795Ivy4huitstVp7vzaT2n\n"
+    "l/Kqzran3jqalQnV4NtKzCE4yuwpwp4ZN2q5NZAoGls7IMUa8gj7fpvRbrm7GWkU\n"
+    "O8ifi/m2bazd0ZhZr0B0veotHsimORMQ7J8x64G4nwKBgQDxl88ZwnazAPjd443B\n"
+    "Z92RBSN/2Ty+ySFDTnVPCRrwkDlUCLZw4ffnschQ5cFotUXlZsITZuQIyHJoQwz5\n"
+    "RfHvV8Z9doAXR6heurIwVz1Mf+TDLmNRylIOUaPdCYBYXzyd/Y5GLqqrMRVmZJUR\n"
+    "A/K6NvXE0gR7ugzCuTxwUYiFkwKBgQDHxgiPnnIFWjdB/fr+ycu3L02DjeXM0Nxf\n"
+    "lFVqkqTpeCS8G2RX6guJv/U57W9V6wcYEyK6JNzYVmvIal7CzFy5ADUt+nWnUiMt\n"
+    "OQLaA8JNnjZxj8QyUuLFGUmL/HEpywL7nVkbngV5aYEEdkbrl0adWvD0TmLUgCPy\n"
+    "rGZ+O9tuTwKBgFsfhlbR+VF1CWkv3hTX50M+q/AZ8QaI+EnZuvdvmMCptWXTz3Ru\n"
+    "VsIGVWbl8fhbfxySkJse0N3bNQPMXoVa83DyK4TBAHlHZuMsCe+fyBglmRRhV8bO\n"
+    "x/psoqDJZ6ZtbYCt1U71ZRwi7E5tm6gKVDAWcMam7Ff6ibucgIZgylyPAoGBALZC\n"
+    "5uyhEkXv2RpMLgLm+QVYEtBDVbVXmLdbDdL9l5eqFVnJY/MRhRVYHNOM3Fb25rIA\n"
+    "Q16w4ww9THi9E1eGO9JNbjdUmqLdPVq0+PUPGObXwbQ6BjYjiOFqAL/GwTfwD/if\n"
+    "xfx8X2I174+ymWG30qUdo1hBa8mUXze4MopY8gnhAoGBANxHUWvTOH28ot5pO+qy\n"
+    "uuLMzB6KlJfrgFnXk3miWojy4iixC2nqPVmy3KAE2oxWpcCor6dkNG8t8IYu9SSz\n"
+    "eX1mIeW6lomEFIGpAouY8l9/q3sa6V8028RQ9asNsRHiEUL7U6683U3ruyGi8hGt\n"
+    "a/Hwa5FpRaB4ZycgWiYWW5kP\n"
+    "-----END PRIVATE KEY-----\n"
+)
 
-# Авторизационные данные вашего сервисного аккаунта Google
+# Полный структурированный словарь авторизации с вашей точной почтой
 GOOGLE_CREDS = {
     "type": "service_account",
     "project_id": "gen-lang-client-0637058958",
     "private_key_id": "ec7efaf300e156f779dba1f54c13cd778dc91bb8",
-    "private_key": RAW_PRIVATE_KEY,
-    # 🛠️ ИСПРАВЛЕНО: Указан ваш точный email со скриншота таблицы
+    "private_key": RAW_KEY,
     "client_email": "skyrimik@://gserviceaccount.com",
     "client_id": "101670696874417843186",
     "auth_uri": "https://google.com",
@@ -58,6 +58,7 @@ scope = [
 ]
 
 
+# Функция подключения к Google API
 def get_gspread_client():
     creds = Credentials.from_service_account_info(GOOGLE_CREDS, scopes=scope)
     return gspread.authorize(creds)
@@ -69,17 +70,23 @@ st.set_page_config(
 
 tab1, tab2 = st.tabs(["🆕 Внести данные", "🔍 Поиск по ID"])
 
-# --- ВКЛАДКА 1: ПОЛНОСТЬЮ АВТОМАТИЧЕСКАЯ ЗАПИСЬ В ТАБЛИЦУ ---
+# --- ВКЛАДКА 1: ФОРМА ДЛЯ ВВОДА ДАННЫХ В ТАБЛИЦУ ---
 with tab1:
     st.header("Внесение новой лицензии")
+
     with st.form("license_form", clear_on_submit=True):
         user_name = st.text_input("Имя человека").strip()
         user_id = st.text_input("ID человека").strip()
         mine_name = st.text_input("На какую шахту выдана лицензия").strip()
+
+        # Выпадающее окно выбора типа лицензии
         license_type = st.selectbox("Тип лицензии", ["Добыча", "Продажа"])
+
+        # Выбор даты окончания действия лицензии
         license_expiry = st.date_input(
             "Дата окончания лицензии", min_value=datetime.date.today()
         )
+
         submit_button = st.form_submit_button(label="Записать в таблицу")
 
     if submit_button:
@@ -88,7 +95,7 @@ with tab1:
         else:
             formatted_date = license_expiry.strftime("%d.%m.%Y")
 
-            # Собираем данные под структуру колонок таблицы A, B, C, D, E
+            # Строго 5 элементов под вашу структуру таблицы (Имя, ID, Шахта, Тип, Дата)
             row_to_insert = [
                 user_name,
                 user_id,
@@ -99,9 +106,10 @@ with tab1:
 
             try:
                 client = get_gspread_client()
+                # Прямое открытие таблицы по проверенному уникальному ID ключу
                 sheet = client.open_by_key(SPREADSHEET_ID).sheet1
 
-                # Добавление строки в таблицу
+                # Добавление новой строки в конец таблицы
                 sheet.append_row(row_to_insert)
 
                 st.success("Данные успешно внесены в Google Таблицу!")
@@ -111,7 +119,8 @@ with tab1:
             except Exception as e:
                 st.error(f"Не удалось сохранить данные. Ошибка: {e}")
 
-# --- ВКЛАДКА 2: ВЫВОД ИСТОРИИ В СТОЛБЕЦ ПО ID ---
+
+# --- ВКЛАДКА 2: ПОИСК ВСЕХ ЗАПИСЕЙ В СТОЛБЕЦ ПО ID ---
 with tab2:
     st.header("Проверка сотрудника")
     search_id = st.text_input("Введите ID человека для поиска").strip()
@@ -121,22 +130,23 @@ with tab2:
         try:
             client = get_gspread_client()
             sheet = client.open_by_key(SPREADSHEET_ID).sheet1
-            all_rows = sheet.get_all_values()[1:]
+            all_rows = sheet.get_all_values()[1:]  # Исключаем заголовки
 
             user_history = []
             for row in all_rows:
+                # На случай пустых ячеек в конце строки дополняем её до 5 элементов
                 while len(row) < 5:
                     row.append("")
 
-                # Сверяем ID (столбец B, индекс 1)
-                if len(row) > 1 and row.strip() == search_id:
+                # Сверяем ID строго по второму столбцу вашей таблицы (столбец B, индекс 1)
+                if len(row) > 1 and row[1].strip() == search_id:
                     user_history.append(
                         {
-                            "Имя": row,
-                            "ID": row,
-                            "Шахта": row,
-                            "Тип": row,
-                            "Дата": row,
+                            "Имя": row[0],
+                            "ID": row[1],
+                            "Шахта": row[2],
+                            "Тип": row[3],
+                            "Дата": row[4],
                         }
                     )
 
@@ -144,6 +154,9 @@ with tab2:
                 st.warning(f"Записей для ID '{search_id}' не найдено.")
             else:
                 st.markdown(f"### Найдено записей: {len(user_history)}")
+                st.write("Все лицензии человека отображены ниже в столбец:")
+
+                # Перебираем найденные строки и выводим карточками друг за другом в столбец
                 for idx, record in enumerate(user_history, 1):
                     st.markdown(f"---")
                     st.markdown(f"### 📋 Запись №{idx} ({record['Тип']})")
