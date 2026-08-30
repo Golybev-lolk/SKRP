@@ -53,7 +53,7 @@ with tab2:
                 st.warning(f"Записей для ID '{search_id}' не найдено.")
             else:
                 st.markdown(f"### Найдено записей: {len(response)}")
-                st.write("Все лицензии человека отображены ниже от старых к новым:")
+                st.write("Все лицензии существа отображены ниже от старых к новым:")
 
                 for idx, record in enumerate(response, 1):
                     st.markdown(f"---")
