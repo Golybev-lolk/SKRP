@@ -2,7 +2,7 @@ import datetime
 import streamlit as st
 import requests
 
-API_URL = "https://script.google.com/macros/s/AKfycbx6Lpv30PzZUwggoyV2QIHaoALEoVudC9vZzUsTGyClkqOa87d4_OVe8QcZoTSZ23x1/exec"
+API_URL = "https://script.google.com/macros/s/AKfycbzsjU2Y0CNstQftN58fJPLOuCyZxlPcYRdhCPAIenXhHGWKc7zwkr8DNTqhawiY3F2c/exec"
 
 st.set_page_config(
     page_title="Система управления лицензиями", layout="centered"
